@@ -1,6 +1,6 @@
 import express, { query } from "express";
 import { PrismaClient } from '@prisma/client'
-
+import cors from 'cors'
 const prisma = new PrismaClient();
 
 
@@ -9,9 +9,11 @@ const prisma = new PrismaClient();
 const app = express();
 
 app.use(express.json());
+app.use(cors());
 
 app.get('/denuncias', async (req, res) => {
     let denuncia = []
+   
 
     if (req.query) {
         denuncia = await prisma.denuncias.findMany({
@@ -75,10 +77,7 @@ app.put('/denuncias/:id', async (req, res) => {
            
     }
     })
-
 res.status(200).json(req.body);
-
-
 })
 
 app.delete('/denuncias/:id', async (req, res) => {
@@ -92,12 +91,50 @@ app.delete('/denuncias/:id', async (req, res) => {
 
 
 })
+//Rotas Usuario Get
+
+app.get('/user', async (req, res) => {
+    let user = []
+
+    if (req.query) {
+        user = await prisma.user.findMany({
+            where: {
+                email: req.query.email,
+                nome: req.query.nome,
+                password : req.query.password,
+     
+            }
+        })
+    } else {
+        const user = await prisma.user.findMany()
+    }
+
+
+    res.status(200).json(user);
+
+
+})
+
+//Rotas Usuario Post
+
+app.post('/user', async (req, res) => {
+
+    await prisma.user.create({
+        data: {
+            email:req.body.email,
+            name:req.body.email,
+            password: req.body.password,
+           
+        }
+    })
+    res.status(201).json(req.body);
+
+
+})
+
 
 
 app.listen(3000, () => {
     console.log('servidor dodando port 3000');
 })
-
-
-
 
