@@ -1,32 +1,27 @@
-import express, { query } from "express";
-import { PrismaClient } from '@prisma/client'
-
+import express from "express";
+import { PrismaClient, Prisma } from '@prisma/client';
 import cors from 'cors';
 
-
 const prisma = new PrismaClient();
-
-
-
-
 const app = express();
 
 app.use(express.json());
+app.use(cors()); 
 
+// Rota para buscar denúncias
 app.get('/denuncias', async (req, res) => {
-    let denuncia = []
-   
+    try {
+        let denuncias = [];
 
-
-        if (req.query) {
+        if (Object.keys(req.query).length) {
             denuncias = await prisma.denuncias.findMany({
                 where: {
-                    endereco: req.query.endereco,
-                    obs: req.query.obs,
-                    dia: req.query.dia,
-                    rua: req.query.rua,
-                    cidade: req.query.cidade,
-                    numero: req.query.numero
+                    endereco: req.query.endereco || undefined,
+                    obs: req.query.obs || undefined,
+                    dia: req.query.dia || undefined,
+                    rua: req.query.rua || undefined,
+                    cidade: req.query.cidade || undefined,
+                    numero: req.query.numero || undefined
                 }
             });
         } else {
@@ -35,198 +30,174 @@ app.get('/denuncias', async (req, res) => {
 
         res.status(200).json(denuncias);
     } catch (error) {
-        console.error(error);
-        res.status(500).json({ error: 'Erro ao buscar denuncias' });
+        console.error('Erro ao buscar denúncias:', error);
+        res.status(500).json({ error: 'Erro ao buscar denúncias' });
     }
 });
 
+// Rota para criar denúncias
 app.post('/denuncias', async (req, res) => {
     try {
-        const { rua, numero, Dia, bairro, cidade, obs } = req.body;
+        let { rua, numero, Dia, bairro, cidade, obs, created_by } = req.body;
+
+        if (Dia && typeof Dia === 'string') {
+            const parsedDate = new Date(Dia);
+            if (!isNaN(parsedDate)) {
+                Dia = parsedDate.toISOString();
+            } else {
+                throw new Error('Data inválida. A data deve estar no formato ISO-8601.');
+            }
+        }
 
         const denuncia = await prisma.denuncias.create({
             data: {
                 rua,
-                numero: parseInt(numero, 10),  
+                numero: parseInt(numero, 10),
                 Dia,
                 bairro,
                 cidade,
-                obs
+                obs,
+                created_by
             }
         });
 
         res.status(201).json(denuncia);
     } catch (error) {
-        console.error(error);
-        res.status(500).json({ error: 'Erro ao fazer denuncia' });
+        console.error('Erro ao criar denúncia:', error);
+        if (error instanceof Prisma.PrismaClientKnownRequestError) {
+            res.status(400).json({ error: 'Erro de requisição conhecido do Prisma' });
+        } else {
+            res.status(500).json({ error: 'Erro ao fazer denúncia' });
+        }
     }
 });
 
-app.put('/denuncias/:id', async (req, res) => {
+// Rota para deletar denúncia
+app.delete('/denuncias/:id', async (req, res) => {
+    const { id } = req.params;
+    const { created_by } = req.body;
+
     try {
-        const updatedDenuncia = await prisma.denuncias.update({
-            where: {
-                id: req.params.id
-            },
-            data: {
-                rua: req.body.rua,
-                numero: req.body.numero,
-                Dia: req.body.Dia,
-                bairro: req.body.bairro,
-                cidade: req.body.cidade,
-                obs: req.body.obs
+        const denuncia = await prisma.denuncias.findUnique({
+            where: { id: String(id) }
+        });
+
+        if (!denuncia) {
+            return res.status(404).json({ message: 'Denúncia não encontrada.' });
+        }
+
+        if (denuncia.created_by !== created_by) {
+            return res.status(403).json({ message: 'Você não tem permissão para deletar esta denúncia.' });
+        }
+
+        await prisma.denuncias.delete({
+            where: { id: String(id) }
+        });
+
+        res.status(200).json({ message: "Denúncia removida com sucesso!" });
+    } catch (error) {
+        console.error('Erro ao deletar denúncia:', error);
+        res.status(500).json({ error: 'Erro ao deletar denúncia.' });
+    }
+});
+
+// Rota para login do usuário
+app.post('/user/login', async (req, res) => {
+    try {
+        const { name, password } = req.body;
+
+        if (name && password) {
+            const user = await prisma.user.findFirst({
+                where: { name, password }
+            });
+
+            if (user) {
+                console.log('Usuário encontrado:', user.name);
+                res.status(200).json(user);
+            } else {
+                res.status(404).json({ message: 'Usuário não encontrado' });
             }
+        } else {
+            res.status(400).json({ message: 'Nome e senha são obrigatórios.' });
+        }
+    } catch (error) {
+        console.error('Erro no login:', error);
+        res.status(500).json({ message: 'Erro interno do servidor' });
+    }
+});
+
+// Rota para buscar ID do usuário
+app.get('/user/id_usuario', async (req, res) => {
+    try {
+        const { name, password } = req.query;
+
+        const user = await prisma.user.findFirst({
+            where: { name, password },
+            select: { id: true }
+        });
+
+        if (user) {
+            res.status(200).json({ id: user.id });
+        } else {
+            res.status(404).json({ error: 'Usuário não encontrado' });
+        }
+    } catch (error) {
+        console.error('Erro ao buscar ID do usuário:', error);
+        res.status(500).json({ error: 'Erro ao buscar usuário' });
+    }
+});
+
+// Rota para cadastro de usuário
+app.post('/user', async (req, res) => {
+    try {
+        const { email, name, password, cpf } = req.body;
+
+        const user = await prisma.user.create({
+            data: { email, name, password, cpf }
+        });
+
+        res.status(201).json(user);
+    } catch (error) {
+        console.error('Erro ao criar cadastro:', error);
+        if (error instanceof Prisma.PrismaClientKnownRequestError) {
+            res.status(400).json({ error: 'Erro de requisição conhecido do Prisma' });
+        } else {
+            res.status(500).json({ error: 'Erro ao realizar cadastro' });
+        }
+    }
+});
+
+// Rota para editar denúncia
+app.put('/denuncias/:id', async (req, res) => {
+    const { id } = req.params;
+    const { created_by, rua, numero, Dia, bairro, cidade, obs } = req.body;
+
+    try {
+        const denuncia = await prisma.denuncias.findUnique({
+            where: { id: String(id) }
+        });
+
+        if (!denuncia) {
+            return res.status(404).json({ message: 'Denúncia não encontrada.' });
+        }
+
+        if (denuncia.created_by !== created_by) {
+            return res.status(403).json({ message: 'Você não tem permissão para editar esta denúncia.' });
+        }
+
+        const updatedDenuncia = await prisma.denuncias.update({
+            where: { id: String(id) },
+            data: { rua, numero: parseInt(numero, 10), Dia, bairro, cidade, obs }
         });
 
         res.status(200).json(updatedDenuncia);
     } catch (error) {
-        console.error(error);
-        res.status(500).json({ error: 'Erro ao atualizar denuncia' });
+        console.error('Erro ao atualizar denúncia:', error);
+        res.status(500).json({ error: 'Erro ao atualizar denúncia.' });
     }
 });
 
-app.delete('/denuncias/:id', async (req, res) => {
-    try {
-        await prisma.denuncias.delete({
-            where: {
-                id: req.params.id
-            }
-        });
-
-        res.status(200).json({ message: "Denuncia removida com sucesso!" });
-    } catch (error) {
-        console.error(error);
-        res.status(500).json({ error: 'Erro ao remover denuncia' });
-    }
-});
-
-//Rotas Usuario Get
-
-app.get('/user', async (req, res) => {
-    let user = []
-
-    if (req.query) {
-        user = await prisma.user.findMany({
-            where: {
-                email: req.query.email,
-                nome: req.query.nome,
-                password : req.query.password,
-     
-            }
-        })
-    } else {
-        const user = await prisma.user.findMany()
-    }
-
-
-    res.status(200).json(user);
-
-
-})
-///verificação 
-app.post('/user/login', async (req, res) => {
-    try {
-      let users = [];
-  
-      // Verificar se os parâmetros de consulta foram fornecidos
-      if (req.body.email && req.body.password) {
-        users = await prisma.user.findMany({
-          where: {
-            email: req.body.email,
-            password: req.body.password,
-            
-            
-          },
-          
-          
-        });
-        console.log('usuario encontrado');
-
-      } else {
-        // Se nenhum parâmetro de consulta foi fornecido, retornar todos os usuários
-        users = await prisma.user.findMany();
-      }
-  
-      // Verificar se há algum usuário retornado
-      if (users.length > 0) {
-        console.log('Usuário encontrado:', users[0].email); // Adicionando um console.log aqui
-        res.status(200).json(users);
-      } else {
-        res.status(404).json({ message: 'Usuário não encontrado' });
-      }
-    } catch (error) {
-      console.error('Erro:', error);
-      res.status(500).json({ message: 'Erro interno do servidor' });
-    }
-  });
-  
-
-
-
-//Rotas Usuario Post
-
-// app.post('/user', async (req, res) => {
-
-//     await prisma.user.create({
-//         data: {
-//             email:req.body.email,
-//             name:req.body.email,
-//             password: req.body.password,
-//             re_password: req.body.re_password,
-           
-           
-//         }
-//     })
-//     res.status(201).json(req.body);
-
-
-// })
-
-//registro de usuario
-app.post('/user', async (req, res) => {
-
-    await prisma.user.create({
-        data: {
-            name:req.body.email,
-            email:req.body.email,
-            password: req.body.password,
-            re_password: req.body.re_password,
-           
-        }
-    })
-    res.status(201).json(req.body);
-
-
-})
-
-
-app.get('/user/revr', async (req, res) => {
-    let register = []
-
-    if (req.query) {
-        register = await prisma.register.findMany({
-            where: {
-                email: req.query.email,
-                nome: req.query.nome,
-                password : req.query.password,
-     
-            }
-        })
-    } else {
-        const register = await prisma.register.findMany()
-    }
-
-
-    res.status(200).json(register);
-
-
-})
-
+// Inicializa o servidor
 app.listen(3000, () => {
     console.log('Servidor rodando na porta 3000');
 });
-    console.log('servidor dodando port 3000');
-})
-
-
-

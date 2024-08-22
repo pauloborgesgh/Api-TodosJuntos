@@ -10,24 +10,25 @@ datasource db {
   }
   
   model Denuncias {
-    id       String   @id @default(auto()) @map("_id") @db.ObjectId
-    rua      String
-    numero   Int
-    bairro   String
-    Dia      String
-    cidade   String
-    obs      String
-  }
-  
-  model User {
-  id      String   @id @default(auto()) @map("_id") @db.ObjectId
-  email   String   @unique
-  name    String?
-  password String?
-
-
-  
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  rua       String
+  numero    Int
+  Dia       DateTime
+  bairro    String
+  cidade    String
+  obs       String
+  created_by    String   
 }
 
+  
+model User {
+  id      String   @id @default(auto()) @map("_id") @db.ObjectId
+  email   String   @unique
+  name    String 
+  password String
+  cpf     String
+  
+
+}
 
   
