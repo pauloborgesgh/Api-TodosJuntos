@@ -73,6 +73,33 @@ app.post('/denuncias', async (req, res) => {
 });
 
 // Rota para deletar denúncia
+// app.delete('/denuncias/:id', async (req, res) => {
+//     const { id } = req.params;
+//     const { created_by } = req.body;
+
+//     try {
+//         const denuncia = await prisma.denuncias.findUnique({
+//             where: { id: String(id) }
+//         });
+
+//         if (!denuncia) {
+//             return res.status(404).json({ message: 'Denúncia não encontrada.' });
+//         }
+
+//         if (denuncia.created_by !== created_by) {
+//             return res.status(403).json({ message: 'Você não tem permissão para deletar esta denúncia.' });
+//         }
+
+//         await prisma.denuncias.delete({
+//             where: { id: String(id) }
+//         });
+
+//         res.status(200).json({ message: "Denúncia removida com sucesso!" });
+//     } catch (error) {
+//         console.error('Erro ao deletar denúncia:', error);
+//         res.status(500).json({ error: 'Erro ao deletar denúncia.' });
+//     }
+// });}
 app.delete('/denuncias/:id', async (req, res) => {
     const { id } = req.params;
     const { created_by } = req.body;
@@ -100,6 +127,7 @@ app.delete('/denuncias/:id', async (req, res) => {
         res.status(500).json({ error: 'Erro ao deletar denúncia.' });
     }
 });
+
 
 // Rota para login do usuário
 app.post('/user/login', async (req, res) => {
