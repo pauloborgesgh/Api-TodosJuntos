@@ -4,9 +4,14 @@ import cors from 'cors';
 
 const prisma = new PrismaClient();
 const app = express();
-
+const port = process.env.PORT ||
 app.use(express.json());
 app.use(cors()); 
+
+app.get("/",(req,res)=>{
+    return res.json("hello word")
+});
+
 
 // Rota para buscar denúncias
 app.get('/denuncias', async (req, res) => {
@@ -226,6 +231,6 @@ app.put('/denuncias/:id', async (req, res) => {
 });
 
 // Inicializa o servidor
-app.listen(3000, () => {
+app.listen(port, () => {
     console.log('Servidor rodando na porta 3000');
 });
