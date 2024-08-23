@@ -4,7 +4,7 @@ import cors from 'cors';
 
 const prisma = new PrismaClient();
 const app = express();
-const port = process.env.PORT ||
+
 app.use(express.json());
 app.use(cors()); 
 
@@ -231,6 +231,6 @@ app.put('/denuncias/:id', async (req, res) => {
 });
 
 // Inicializa o servidor
-app.listen(port, () => {
+app.listen(3000, () => {
     console.log('Servidor rodando na porta 3000');
 });
