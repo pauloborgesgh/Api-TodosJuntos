@@ -8,11 +8,38 @@ const app = express();
 app.use(express.json());
 app.use(cors()); 
 
-app.get("/",async (req,res)=>{
-    return res.json("hello word")
+// app.get("/",async (req,res)=>{
+//     return res.json("hello word")
+// });
+
+app.put('/denuncias/:id', async (req, res) => {
+    const { id } = req.params;
+    const { created_by, rua, numero, Dia, bairro, cidade, obs } = req.body;
+
+    try {
+        const denuncia = await prisma.denuncias.findUnique({
+            where: { id: String(id) }
+        });
+
+        if (!denuncia) {
+            return res.status(404).json({ message: 'Denúncia não encontrada.' });
+        }
+
+        if (denuncia.created_by !== created_by) {
+            return res.status(403).json({ message: 'Você não tem permissão para editar esta denúncia.' });
+        }
+
+        const updatedDenuncia = await prisma.denuncias.update({
+            where: { id: String(id) },
+            data: { rua, numero: parseInt(numero, 10), Dia, bairro, cidade, obs }
+        });
+
+        res.status(200).json(updatedDenuncia);
+    } catch (error) {
+        console.error('Erro ao atualizar denúncia:', error);
+        res.status(500).json({ error: 'Erro ao atualizar denúncia.' });
+    }
 });
-
-
 // Rota para buscar denúncias
 app.get('/denuncias', async (req, res) => {
     try {
@@ -77,34 +104,7 @@ app.post('/denuncias', async (req, res) => {
     }
 });
 
-// Rota para deletar denúncia
-// app.delete('/denuncias/:id', async (req, res) => {
-//     const { id } = req.params;
-//     const { created_by } = req.body;
 
-//     try {
-//         const denuncia = await prisma.denuncias.findUnique({
-//             where: { id: String(id) }
-//         });
-
-//         if (!denuncia) {
-//             return res.status(404).json({ message: 'Denúncia não encontrada.' });
-//         }
-
-//         if (denuncia.created_by !== created_by) {
-//             return res.status(403).json({ message: 'Você não tem permissão para deletar esta denúncia.' });
-//         }
-
-//         await prisma.denuncias.delete({
-//             where: { id: String(id) }
-//         });
-
-//         res.status(200).json({ message: "Denúncia removida com sucesso!" });
-//     } catch (error) {
-//         console.error('Erro ao deletar denúncia:', error);
-//         res.status(500).json({ error: 'Erro ao deletar denúncia.' });
-//     }
-// });}
 app.delete('/denuncias/:id', async (req, res) => {
     const { id } = req.params;
     const { created_by } = req.body;
@@ -200,36 +200,110 @@ app.post('/user', async (req, res) => {
     }
 });
 
-// Rota para editar denúncia
-app.put('/denuncias/:id', async (req, res) => {
+//rota do angular
+app.delete('/denuncias/remove/:id', async (req, res) => {
+    // Obtém o ID da denúncia da URL
     const { id } = req.params;
-    const { created_by, rua, numero, Dia, bairro, cidade, obs } = req.body;
+    console.log('ID da denúncia recebido:', id);
+
+    // Obtém o campo created_by do corpo da requisição
+    const { created_by } = req.body;
+    console.log('created_by recebido:', created_by);
 
     try {
+        // Busca a denúncia no banco de dados
         const denuncia = await prisma.denuncias.findUnique({
-            where: { id: String(id) }
+            where: { id: String(id) },
         });
+        console.log('Denúncia encontrada:', denuncia);
 
+        // Verifica se a denúncia existe
         if (!denuncia) {
+            console.log('Denúncia não encontrada.');
             return res.status(404).json({ message: 'Denúncia não encontrada.' });
         }
 
+        // Verifica se o usuário autenticado é o criador da denúncia
         if (denuncia.created_by !== created_by) {
-            return res.status(403).json({ message: 'Você não tem permissão para editar esta denúncia.' });
+            console.log('Usuário não tem permissão para deletar esta denúncia.');
+            return res.status(403).json({ message: 'Você não tem permissão para deletar esta denúncia.' });
         }
 
-        const updatedDenuncia = await prisma.denuncias.update({
+        // Deleta a denúncia
+        await prisma.denuncias.delete({
             where: { id: String(id) },
-            data: { rua, numero: parseInt(numero, 10), Dia, bairro, cidade, obs }
         });
+        console.log('Denúncia deletada com sucesso.');
 
-        res.status(200).json(updatedDenuncia);
+        // Responde com sucesso
+        return res.status(200).json({ message: 'Denúncia removida com sucesso!' });
     } catch (error) {
-        console.error('Erro ao atualizar denúncia:', error);
-        res.status(500).json({ error: 'Erro ao atualizar denúncia.' });
+        console.error('Erro ao deletar denúncia:', error);
+        return res.status(500).json({ error: 'Erro ao deletar denúncia.' });
     }
 });
 
+
+  app.delete('/denuncia/:id', async (req, res) => {
+  const { id } = req.params;
+  const { created_by } = req.body; // created_by vem do corpo da requisição
+
+  try {
+    // Busca a denúncia no banco de dados
+    const denuncia = await prisma.denuncias.findUnique({
+      where: { id: String(id) },
+    });
+
+    // Verifica se a denúncia existe
+    if (!denuncia) {
+      return res.status(404).json({ message: 'Denúncia não encontrada.' });
+    }
+
+    // Verifica se o usuário autenticado é o criador da denúncia
+    if (denuncia.created_by !== created_by) {
+      return res.status(403).json({ message: 'Você não tem permissão para deletar esta denúncia.' });
+    }
+
+    // Deleta a denúncia
+    await prisma.denuncias.delete({
+      where: { id: String(id) },
+    });
+
+    // Responde com sucesso
+    return res.status(200).json({ message: 'Denúncia removida com sucesso!' });
+  } catch (error) {
+    console.error('Erro ao deletar denúncia:', error);
+    return res.status(500).json({ error: 'Erro ao deletar denúncia.' });
+  }
+});
+
+//rota do angular
+app.put('/denuncias/edit/:id', async (req, res) => {
+    const { id } = req.params;
+    console.log('ID recebido para atualização:', id);
+    const data = req.body; // Dados da denúncia para atualização
+    console.log('Dados recebidos para atualização:', data);
+  
+    try {
+      // Atualiza a denúncia no banco de dados
+      const denuncia = await prisma.denuncias.update({
+        where: { id: String(id) },
+        data: data
+      });
+  
+      console.log('Denúncia atualizada:', denuncia);
+      
+      return res.status(200).json({ message: 'Denúncia atualizada com sucesso!', denuncia });
+    } catch (error) {
+      console.error('Erro ao atualizar denúncia:', error);
+      return res.status(500).json({ error: 'Erro ao atualizar denúncia.' });
+    }
+  });
+  
+
+
+  
+  
 // Inicializa o servidor
 app.listen(process.env.PORT || 3000, () => {
     console.log('Servidor rodando');
