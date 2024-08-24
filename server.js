@@ -8,7 +8,7 @@ const app = express();
 app.use(express.json());
 app.use(cors()); 
 
-app.get("/",(req,res)=>{
+app.get("/",async (req,res)=>{
     return res.json("hello word")
 });
 
@@ -231,6 +231,6 @@ app.put('/denuncias/:id', async (req, res) => {
 });
 
 // Inicializa o servidor
-app.listen(3000, () => {
-    console.log('Servidor rodando na porta 3000');
-});
+app.listen(process.env.PORT || 3000, () => {
+    console.log('Servidor rodando');
+  });
