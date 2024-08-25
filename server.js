@@ -6,7 +6,7 @@ const prisma = new PrismaClient();
 
 const app = express();
 const corsOptions = {
-    origin: '*', // Permite todas as origens, ajuste conforme necessário para maior segurança
+    origin: '*,http://localhost:8100', // Permite todas as origens, ajuste conforme necessário para maior segurança
     methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
     allowedHeaders: 'Content-Type,Authorization',
     credentials: true,
