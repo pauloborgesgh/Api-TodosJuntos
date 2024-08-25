@@ -8,9 +8,9 @@ const app = express();
 app.use(express.json());
 app.use(cors()); 
 
-// app.get("/",async (req,res)=>{
-//     return res.json("hello word")
-// });
+app.get("/",async (req,res)=>{
+    return res.json("hello word React API PRONTO")
+});
 
 app.put('/denuncias/:id', async (req, res) => {
     const { id } = req.params;
