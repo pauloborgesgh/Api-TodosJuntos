@@ -4,7 +4,13 @@ import cors from 'cors';
 
 const prisma = new PrismaClient();
 const app = express();
-
+const corsOptions = {
+    origin: '*', // Permite todas as origens, ajuste conforme necessário para maior segurança
+    methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
+    allowedHeaders: 'Content-Type,Authorization'
+  };
+  
+  app.use(cors(corsOptions)); // Adiciona o middleware cors ao Express
 app.use(express.json());
 app.use(cors()); 
 
