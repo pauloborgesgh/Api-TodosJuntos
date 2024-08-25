@@ -3,14 +3,13 @@
   "version": "1.0.0",
   "main": "server.js",
   "type": "module",
- "scripts": {
+"scripts": {
   "start": "node server.js",
   "build": "npm run build",
-  "vercel-build": "yarn install && yarn build && npx prisma generate",
+  "vercel-build": "npm run build && npx prisma generate",
   "test": "echo \"Error: no test specified\" && exit 1"
+},
 
-
-  },
   "keywords": [],
   "author": "",
   "license": "ISC",
