@@ -7,7 +7,7 @@ const prisma = new PrismaClient();
 const app = express();
 
 const corsOptions = {
-    origin: '*,http://localhost:8100', // Permite todas as origens, ajuste conforme necessário para maior segurança
+    origin: '*', // Permite todas as origens, ajuste conforme necessário para maior segurança
     methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
     allowedHeaders: 'Content-Type,Authorization',
     credentials: true,
@@ -145,7 +145,7 @@ app.delete('/denuncias/:id', async (req, res) => {
 
 
 // Rota para login do usuário
-app.post('/login', async (req, res) => {
+app.post('/user/login', async (req, res) => {
     try {
         const { name, password } = req.body;
 
