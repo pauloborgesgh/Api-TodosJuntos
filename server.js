@@ -5,6 +5,7 @@ import cors from 'cors';
 const prisma = new PrismaClient();
 
 const app = express();
+
 const corsOptions = {
     origin: '*,http://localhost:8100', // Permite todas as origens, ajuste conforme necessário para maior segurança
     methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
@@ -13,9 +14,9 @@ const corsOptions = {
 
   };
   
-  app.use(cors(corsOptions)); // Adiciona o middleware cors ao Express
+app.use(cors(corsOptions)); // Adiciona o middleware cors ao Express
 app.use(express.json());
-app.use(cors()); 
+// app.use(cors()); 
 
 app.get("/",async (req,res)=>{
     return res.json("hello word React API PRONTO")
