@@ -1,14 +1,16 @@
 generator client {
   provider      = "prisma-client-js"
-  
+  binaryTargets = ["native", "rhel-openssl-3.0.x"]
 }
 
 
 
 
 datasource db {
-    provider = "mongodb"
-    url      = env("DATABASE_URL")
+   
+
+  provider="mongodb"
+  url="mongodb+srv://devakmg:fn9DFI37BkUvgqN1@clustertd.vgutl.mongodb.net/ClusterTD?retryWrites=true&w=majority&appName=ClusterTD"
   }
   
   model Denuncias {
