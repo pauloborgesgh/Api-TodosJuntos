@@ -16,7 +16,7 @@ const corsOptions = {
   
 app.use(cors(corsOptions)); // Adiciona o middleware cors ao Express
 app.use(express.json());
-// app.use(cors()); 
+app.use(cors()); 
 
 app.get("/",async (req,res)=>{
     return res.json("hello word React API PRONTO")
